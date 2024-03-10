@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- ./deployment.yaml
+patches:
+- target:
+    labelSelector: "app.kubernetes.io/name=pacman-kikd"
+  patch: |-
+    apiVersion: apps/v1
+    kind: Deployment
+    metadata:
+      name: pacman-kikd
+    spec:
+      template:
+        spec:
+          containers:
+          - name: pacman-kikd
+            image: lordofthejars/pacman-kikd:1.2.0

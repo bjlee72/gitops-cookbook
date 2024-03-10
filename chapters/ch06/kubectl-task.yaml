@@ -1,0 +1,16 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: kubectl
+spec:
+  params:
+    - name: SCRIPT
+      description: The kubectl CLI
+      type: string
+      default: "kubectl help"
+  steps:
+    - name: oc
+      image: quay.io/openshift/origin-cli:4.6
+      script: |
+        #!/usr/bin/env bash
+        $(params.SCRIPT)

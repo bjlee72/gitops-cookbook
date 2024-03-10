@@ -1,0 +1,59 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: build-app
+spec:
+  workspaces:
+    - name: source
+      description: The git repo will be cloned onto the volume backing this workspace
+  params:
+    - name: contextDir
+      description: the context dir within source
+      default: quarkus
+    - name: tlsVerify
+      description: tls verify
+      type: string
+      default: "false"
+    - name: url
+      type: string
+      default: "https://github.com/gitops-cookbook/tekton-tutorial-greeter.git"
+    - name: revision
+      default: master
+    - name: sslVerify
+      description: defines if http.sslVerify should be set to true or false in the global git config
+      type: string
+      default: "false"
+  steps:
+    - image: 'gcr.io/tekton-releases/github.com/tektoncd/pipeline/cmd/git-init:v0.44.5'
+      name: clone
+      script: |
+        cleandir() {
+          # Delete any existing contents of the repo directory if it exists.
+          #
+          # We don't just "rm -rf $CHECKOUT_DIR" because $CHECKOUT_DIR might be "/"
+          # or the root of a mounted volume.  
+          if [[ -d "$CHECKOUT_DIR" ]] ; then
+            # Delete non-hidden files and directories
+            rm -rf "$CHECKOUT_DIR"/*
+            # Delete files and directories starting with . but excluding ..
+            rm -rf "$CHECKOUT_DIR"/.[!.]*
+            # Delete files and directories starting with .. plus any other charac
+            rm -rf "$CHECKOUT_DIR"/..?*
+          fi
+        }
+
+        /ko-app/git-init -url="$(params.url)" \
+          -revision="$(params.revision)" \
+          -path="$(workspaces.source.path)" \
+          -sslVerify="$(params.sslVerify)"
+
+        cd "$(workspaces.source.path)"
+        RESULT_SHA="$(git rev-parse HEAD)"
+    - name: build-sources
+      image: gcr.io/cloud-builders/mvn
+      script: |
+        cd $(workspaces.source.path)/$(params.contextDir)
+        mvn -DskipTests clean install
+      env:
+        - name: user.home
+          value: /home/tekton
