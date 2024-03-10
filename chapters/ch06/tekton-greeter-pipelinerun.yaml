@@ -1,0 +1,22 @@
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  generateName: tekton-greeter-pipeline-run-
+spec:
+  taskRunSpecs:
+    - pipelineTaskName: build-push-app
+      serviceAccountName: tekton-registry-sa
+    - pipelineTaskName: deploy-app
+      serviceAccountName: tekton-deployer-sa
+  pipelineRef:
+    name: tekton-greeter-pipeline
+  params:
+  - name: GIT_REPO
+    value: https://github.com/gitops-cookbook/tekton-tutorial-greeter.git
+  - name: GIT_REF
+    value: "master"
+  - name: DESTINATION_IMAGE
+    value: "quay.io/gitops-cookbook/tekton-greeter:latest"
+  workspaces:
+    - name: pipeline-shared
+      emptyDir: {}
