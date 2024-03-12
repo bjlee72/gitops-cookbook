@@ -1,0 +1,33 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerTemplate
+metadata:
+  name: tekton-greeter-triggertemplate
+spec:
+  params:
+    - name: git-revision
+    - name: git-repo-url
+    - name: destination-image
+  resourcetemplates:
+    - apiVersion: tekton.dev/v1
+      kind: PipelineRun
+      metadata:
+        labels:
+          tekton.dev/pipeline: tekton-greeter-pipeline-hub
+        name: greeter-prun-$(uid)
+      spec:
+        params:
+          - name: GIT_REPO
+            value: $(tt.params.git-repo-url)
+          - name: GIT_REF
+            value: $(tt.params.git-revision)
+          - name: DESTINATION_IMAGE
+            value: $(tt.params.destination-image)
+        serviceAccountName: tekton-triggers-sa
+        pipelineRef:
+          name: tekton-greeter-pipeline-hub
+        workspaces:
+        - name: app-source
+          persistentVolumeClaim:
+            claimName: app-source-pvc
+        - name: maven-settings
+          emptyDir: {}
