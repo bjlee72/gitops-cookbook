@@ -9,5 +9,5 @@ spec:
   - name: git-revision
     value: $(body.after)
   - name: destination-image
-    value: "quay.io/bjlee72/tekton-greeter:latest"
+    value: "quay.io/gitops-cookbook/tekton-greeter:latest"
 
